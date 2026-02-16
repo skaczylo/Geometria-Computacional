@@ -8,7 +8,6 @@ Instrucciones:
 import random
 import math
 import matplotlib.pyplot as plt
-import numpy as np
 ERROR = 1e-9
 
 class Punto:
@@ -24,32 +23,56 @@ class Punto:
         return Punto(self.x - other.x, self.y - other.y)
 
 
+def prod_vectorial(a:Punto, b:Punto):
+    return a.x*b.y - a.y*b.x
+
+def det(a:Punto, b:Punto, c:Punto):
+    return prod_vectorial(b-a,c-a)
+
+
 def alineados(a: Punto, b: Punto, c: Punto) -> bool:
     # Devuelve True/False si los puntos a, b, c están alineados/no lo están
-
-    A = np.array([[a.x, a.y,1],[b.x,b.y,1],[c.x,c.y,1]]) #matriz puntos
-    det = np.linalg.det(A)
-
-    if(abs(det) < ERROR):
+    if abs(det(a,b,c))< ERROR: #producto vectorial
         return True
-
+   
     return False
     
 def ordena_angularmente(puntos: list[Punto]) -> list[Punto]:
     # Input: puntos es una lista de Punto
     # Output: lista de puntos ordenada angularmente (según el ángulo desde el origen)
     # Sugerencia: usar una función de comparación auxiliar como la esbozada
-
     def angulo(p: Punto) -> float:
-        return math.atan2(p.y, p.x) #ata2 devuelve el arcotangente 
+        return math.atan2(p.y,p.x)
     
+    return sorted(puntos,key=angulo)
 
-    return sorted(puntos, key = angulo)
+
+def orientacion(a:Punto, b:Punto,c:Punto):
+
+    if abs(det(a,b,c)) < ERROR:
+        return 0
+    elif det(a,b,c) > 0:
+        return 1
+    else:
+        return-1
+    
 
 def punto_en_triangulo(p: Punto, triangulo: list[Punto]) -> bool:
     # Input: p Punto y triangulo lista con 3 Puntos, los vértices del triángulo
     # Output: True/False si el punto p está en el interior del triángulo o no    
-    return 
+
+    t_antihorario = triangulo
+    orient = orientacion(triangulo[0],triangulo[1],triangulo[2])
+    if orient == -1: #sentido horario
+        t_antihorario = triangulo[::-1]
+
+    #Asumimos sentido antihorario => solo comprobar si P esta siempre a la izquierda
+    for i in range(len(t_antihorario)):
+        if orientacion(t_antihorario[i-1],t_antihorario[i],p) == -1:
+            return False
+    
+
+    return True
 
 
 def comprueba_alineados(puntos = None):
@@ -87,7 +110,7 @@ def comprueba_punto_en_triangulo (p = None, triangulo = None, respuesta_esperada
     plt.text(p.x, p.y, s)
     plt.show()
 
-comprueba_alineados([Punto(1,1), Punto(2,2), Punto(3,3)])
-comprueba_alineados()# prueba con 3 puntos de coordenadas enteras pequeñas al azar
-comprueba_ordena_angularmente()
-# comprueba_punto_en_triangulo()
+#comprueba_alineados([Punto(1,1), Punto(2,2), Punto(3,3)])
+# comprueba_alineados() prueba con 3 puntos de coordenadas enteras pequeñas al azar
+#comprueba_ordena_angularmente()
+comprueba_punto_en_triangulo()
