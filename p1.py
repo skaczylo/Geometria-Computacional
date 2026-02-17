@@ -41,38 +41,6 @@ def orient(a: Punto, b: Punto, c: Punto) -> int:
     else: return -1
 
 
-def segmentos_se_cortan(s: list[Punto], t: list[Punto]) -> bool:
-    # Input: s, t son listas con dos puntos, los extremos de los segmentos s y t.
-    # Output: True/False decidiendo si s y t se cortan (incluyendo solaparse o cortarse en un extremo)
-
-    if orient(s[0],s[1],t[0]) != orient(s[0],s[1],t[1]) and orient(t[0],t[1],s[0]) != orient(t[0],t[1],s[1]): #Se cortan
-        return True
-    
-    return False
-
-
-def segmento_semirecta_cortan(s: list[Punto], r: list[Punto]) -> bool:
-    """
-    s: lista con dos puntos, los extremos del segmento
-    r: lista con dos puntos, vector de la semirecta
-  
-    True/False deciden si s y r se cortan
-    """
-
-    if orient(r[0],r[1],s[0]) == 0 or orient(r[0],r[1],s[1])==0:
-        return True
-
-
-    if orient(r[0],r[1],s[0]) != orient(r[0],r[1],s[1]):
-
-        if orient(r[0],r[1],s[0]) == 1 and orient(s[0],s[1],r[0]) == -1:
-            return True
-        elif orient(r[0],r[1],s[0]) == -1 and orient(s[0],s[1],r[0]) == 1:
-            return True
-
-    
-    return False
-
 
 def punto_en_segmento(p, s):
     #p punto, s segmento = lista con dos puntos
@@ -85,23 +53,51 @@ def punto_en_segmento(p, s):
         return min(s[0].y, s[1].y) - ERROR <= p.y <= max(s[0].y, s[1].y) + ERROR
     
 
+def segmentos_se_cortan(s: list[Punto], t: list[Punto]) -> bool:
+    # Input: s, t son listas con dos puntos, los extremos de los segmentos s y t.
+    # Output: True/False decidiendo si s y t se cortan (incluyendo solaparse o cortarse en un extremo)
+
+    if orient(s[0],s[1],t[0]) != orient(s[0],s[1],t[1]) and orient(t[0],t[1],s[0]) != orient(t[0],t[1],s[1]): #Se cortan en X
+        return True
+    
+    #Casos extremos: solapamiento
+    if alineados(s[0],s[1],t[0]) and alineados(s[0],s[1],t[1]): #Pertenecen misma recta pero pueden no solapar
+        return punto_en_segmento(s[0], t) or punto_en_segmento(s[1], t) or punto_en_segmento(t[0], s) or punto_en_segmento(t[1], s)
+    
+    #Corte en un extremo
+    if punto_en_segmento(s[0], t) or punto_en_segmento(s[1], t):
+        return True
+    
+    if punto_en_segmento(t[0], s) or punto_en_segmento(t[1], s):
+        return True
+    
+
+    return False
+
+
+
+
 def punto_en_poligono(q: Punto, pol: list[Punto]) -> bool:
     # Input: q es un punto, pol es una lista de puntos que, en ese orden, son los vértices de un polígono (simple)
     # Output: True/False decidiendo si q está dentro de pol (incluyendo la frontera)
 
     contador = 0 #num veces interseca con un lado
 
+    maxcoord = max(p.x for p in pol)
+    t = [q, Punto(maxcoord + 1, random.uniform(-1, 1))]
+      # El segmento acaba en un punto cuya coordenada x es mayor que las de los vértices del polígono y su coordenada y es un real aleatorio
+    
     for i in range(len(pol)):
-        if punto_en_segmento(q,[pol[i-1],pol[i]]):
-            return True
-        elif segmento_semirecta_cortan(s = [pol[i-1],pol[i]], r = [q, q+Punto(1,0)]) :
-            contador +=1
-
-    if contador %2 == 0:
-        return False
-
-
-    return True
+        # Nos avisa si se da la improbable situación en que el segmento pasa por un vértice de pol (en cuyo caso no bastaría con contar intersecciones)
+        # y empezamos de nuevo
+        if alineados(t[0], t[1], pol[i-1]):
+            return punto_en_poligono(q, pol)
+        
+        # Si q está encima de un lado del polígono puede fallar la cuenta de intersecciones pero la función debe devolver True
+        if punto_en_segmento(q, [pol[i-1], pol[i]]): return True
+        if segmentos_se_cortan([pol[i-1], pol[i]], t):
+            contador = contador + 1
+    return (contador % 2 == 1)   
 
 
 def comprueba_segmentos_se_cortan(s = None, t = None, size = 2, entero = False):
@@ -114,7 +110,7 @@ def comprueba_segmentos_se_cortan(s = None, t = None, size = 2, entero = False):
         s = [punto_aleatorio(), punto_aleatorio()]
     if t is None:
         t = [punto_aleatorio(), punto_aleatorio()]
-    respuesta = segmento_semirecta_cortan(s, t)
+    respuesta = segmentos_se_cortan(s, t)
     plt.plot([p.x for p in s], [p.y for p in s], 'blue')
     plt.plot([p.x for p in t], [p.y for p in t], 'red')
     texto = 'Sí se cortan' if respuesta else 'NO se cortan'
