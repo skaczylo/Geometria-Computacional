@@ -64,6 +64,7 @@ def segmentos_se_cortan(s: list[Punto], t: list[Punto]) -> bool:
     return (orient(s[0], s[1], t[0]) * orient(s[0], s[1], t[1]) == -1) and (orient(t[0], t[1], s[0]) * orient(t[0], t[1], s[1]) == -1)
 
 
+
 def puntos_tangencia_poligono(q: Punto, pol: list[Punto]) -> list:
     """Encuentra los dos puntos donde cortan las tangentes desde el Punto q al polígono pol.
     En caso de ambigüedad porque la tangente contenga un lado del polígono, elegimos el vértice más cercano a q"""
