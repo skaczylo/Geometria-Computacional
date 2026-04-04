@@ -48,20 +48,17 @@ def ordena_angularmente(puntos: list[Punto]) -> list[Punto]:
     return sorted(puntos,key=angulo) 
 
 
-def orientacion(a:Punto, b:Punto, c:Punto):
+def orient(a:Punto, b:Punto, c:Punto):
     """
     Orientación de 3 puntos.
     Si orientacion a la izquierda devuelve -1
     Si coolineares devuelve 0
     Si orientaacion a la derecha devuelve 1
     """
-
-    if alineados(a,b,c):
-        return 0
-    elif det(a,b,c) < 0:
-        return -1
-    else:
-        return 1
+    d = det(a, b, c)
+    if abs(d) < ERROR: return 0
+    elif d > ERROR: return 1
+    else: return -1
 
 
 def punto_en_triangulo(p: Punto, triangulo: list[Punto]) -> bool:
@@ -71,9 +68,41 @@ def punto_en_triangulo(p: Punto, triangulo: list[Punto]) -> bool:
     """
     orients = []
     for i in range(len(triangulo)):
-        orients.append(orientacion(triangulo[i-1],triangulo[i],p))
+        orients.append(orient(triangulo[i-1],triangulo[i],p))
 
     if len(set(orients)) == 1: #Misma orientacion para cada lado
         return True
     
     return False
+
+def punto_en_segmento(p, s):
+    """
+    p punto, s segmento = lista con dos puntos
+
+    devuelve True si p está dentro del segmento, incluyendo sus extremos
+    """
+
+    if not alineados(p, s[0], s[1]):
+        return False
+    if abs(s[0].x - s[1].x) > ERROR:
+        return min(s[0].x, s[1].x) - ERROR <= p.x <= max(s[0].x, s[1].x) + ERROR
+    else:
+        return min(s[0].y, s[1].y) - ERROR <= p.y <= max(s[0].y, s[1].y) + ERROR
+    
+
+def segmentos_se_cortan(s: list[Punto], t: list[Punto]) -> bool:
+    """
+    Input: s, t son listas con dos puntos, los extremos de los segmentos s y t.
+    
+    Output: True/False decidiendo si s y t se cortan (incluyendo solaparse o cortarse en un extremo)
+    si los cuatro puntos están alineados
+    """
+    if alineados(s[0], s[1], t[0]) and alineados(s[0], s[1], t[1]):
+        return punto_en_segmento(s[0], t) or punto_en_segmento(s[1], t) or punto_en_segmento(t[0], s) or punto_en_segmento(t[1], s)        
+    #si tres puntos están alineados (y no los cuatro) devuelve True solo si uno está dentro del otro segmento
+    for p in s:
+        if alineados(p, t[0], t[1]): return punto_en_segmento(p, t)        
+    for p in t:
+        if alineados(p, s[0], s[1]): return punto_en_segmento(p, s)        
+    #(sabemos que no hay tres alineados) usamos xor = '^' (True ^ False = True, F^T=T T^T=F, F^F=F)
+    return (orient(s[0], s[1], t[0]) * orient(s[0], s[1], t[1]) == -1) and (orient(t[0], t[1], s[0]) * orient(t[0], t[1], s[1]) == -1)

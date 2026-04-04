@@ -12,19 +12,80 @@ import numpy as np
 import matplotlib.pyplot as plt
 from gcom import ERROR
 from gcom import Punto
+from gcom import orient
+from gcom import alineados
 import gcom
 
 
+def punto_en_segmento(p: Punto, s:list[Punto])->bool:
+    s1,s2 = s
+
+    if orient(s1,s2,p) != 0:
+        return False
+    
+    return min(s1.x,s2.x) <= p.x and p.x <= max(s1.x,s2.x) and min(s1.y,s2.y) <= p.y and p.y <= max(s1.y,s2.y)
+
 
 def segmentos_se_cortan(s: list[Punto], t: list[Punto]) -> bool:
-    # Input: s, t son listas con dos puntos, los extremos de los segmentos s y t.
-    # Output: True/False decidiendo si s y t se cortan (incluyendo solaparse o cortarse en un extremo)
-    return True
+    """
+    Input: s, t son listas con dos puntos, los extremos de los segmentos s y t.
+
+    Output: True/False decidiendo si s y t se cortan (incluyendo solaparse o cortarse en un extremo)
+    """
+    s1,s2 = s[0],s[1]
+    t1,t2 = t[0],t[1]
+
+    o1 = orient(s1,s2,t1) #lado de t1 respecto de s
+    o2 = orient(s1,s2,t2) #lado t2 respecto de s
+    o3 = orient(t1,t2,s1) #lado s1 respecto de t
+    o4 = orient(t1,t2,s2) #lado s2 respecto de t
+
+
+    if o1 != 0 and o2 != 0 and o3 != 0 and o4 != 0: #No colineales
+
+        if o1*o2 < 0 and o3*o4 < 0: #equivalente a o1 != o2 and o3 != o4
+            return True
+        else:
+            return False
+
+    if o1 == 0 and punto_en_segmento(t1,s):
+        return True
+    
+    if o2 == 0 and punto_en_segmento(t2,s):
+        return True
+    
+    if o3 == 0 and punto_en_segmento(s1,t):
+        return True
+    if o4 == 0 and punto_en_segmento(s2,t):
+        return True
+    
+
+    return False
 
 def punto_en_poligono(q: Punto, pol: list[Punto]) -> bool:
-    # Input: q es un punto, pol es una lista de puntos que, en ese orden, son los vértices de un polígono (simple)
-    # Output: True/False decidiendo si q está dentro de pol (incluyendo la frontera)
-    return True
+    """
+    Input: q es un punto, pol es una lista de puntos que, en ese orden, son los vértices de un polígono (simple)
+    
+    Output: True/False decidiendo si q está dentro de pol (incluyendo la frontera)
+    """
+
+    contador = 0 #num veces interseca con un lado
+
+    maxcoord = max(p.x for p in pol)
+    t = [q, Punto(maxcoord + 1, random.uniform(-1, 1))]
+      # El segmento acaba en un punto cuya coordenada x es mayor que las de los vértices del polígono y su coordenada y es un real aleatorio
+    
+    for i in range(len(pol)):
+        # Nos avisa si se da la improbable situación en que el segmento pasa por un vértice de pol (en cuyo caso no bastaría con contar intersecciones)
+        # y empezamos de nuevo
+        if alineados(t[0], t[1], pol[i-1]):
+            return punto_en_poligono(q, pol)
+        
+        # Si q está encima de un lado del polígono puede fallar la cuenta de intersecciones pero la función debe devolver True
+        if punto_en_segmento(q, [pol[i-1], pol[i]]): return True
+        if segmentos_se_cortan([pol[i-1], pol[i]], t):
+            contador = contador + 1
+    return (contador % 2 == 1) 
 
 
 
@@ -103,9 +164,11 @@ def comprueba_punto_en_poligono(q = None, pol = None, n_vertices = 12):
 
 comprueba_segmentos_se_cortan()
 # Segmentos que se cortan:
-# comprueba_segmentos_se_cortan([Punto(0,1), Punto(2,1)], [Punto(1,0), Punto(1,2)])
+# %%
+comprueba_segmentos_se_cortan([Punto(0,1), Punto(2,1)], [Punto(1,0), Punto(1,2)])
 # Segmentos que se cortan:
-# comprueba_segmentos_se_cortan([Punto(0,1), Punto(2,1)], [Punto(0,1), Punto(1,2)])
+# %%
+comprueba_segmentos_se_cortan([Punto(0,1), Punto(2,1)], [Punto(0,1), Punto(1,2)])
 
 # comprueba_punto_en_poligono()
 
@@ -113,3 +176,5 @@ comprueba_segmentos_se_cortan()
 # pol = [Punto(0,0), Punto(1,0), Punto(1,1), Punto(0,1)]
 # q = Punto(0.5, 0.5)
 # comprueba_punto_en_poligono(q, pol)
+
+# %%
