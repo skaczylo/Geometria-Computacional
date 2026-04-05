@@ -11,6 +11,8 @@ class Punto:
         return Punto(self.x + other.x, self.y + other.y)  
     def __sub__(self, other):
         return Punto(self.x - other.x, self.y - other.y)
+    def __hash__(self):
+        return hash((round(self.x, 9), round(self.y, 9)))
     
 
 def producto_vectorial(a: Punto, b:Punto):
@@ -106,3 +108,22 @@ def segmentos_se_cortan(s: list[Punto], t: list[Punto]) -> bool:
         if alineados(p, s[0], s[1]): return punto_en_segmento(p, s)        
     #(sabemos que no hay tres alineados) usamos xor = '^' (True ^ False = True, F^T=T T^T=F, F^F=F)
     return (orient(s[0], s[1], t[0]) * orient(s[0], s[1], t[1]) == -1) and (orient(t[0], t[1], s[0]) * orient(t[0], t[1], s[1]) == -1)
+
+
+def puntos_tangencia_poligono(q: Punto, pol: list):
+    """Encuentra los dos puntos donde cortan las tangentes desde el Punto q al polígono pol.
+    En caso de ambigüedad porque la tangente contenga un lado del polígono, elegimos el vértice más cercano a q"""
+    # IMPORTANTE: q está en el semiplano {x < 0} y pol está en el semiplano {x >= 0} 
+    # Input: q es un punto, pol es una lista de puntos que, en ese orden, son los vértices de un polígono (simple)
+    # Output: lista con 2 Puntos (en cualquier orden)  
+    """el punto de tangencia "superior" es el punto de pol tal que el ángulo del segmento orientado que lo une con q es mayor
+    (en caso de empate cogemos aquel para el que la distancia a q sea menor (<=> -distancia(q,p) es mayor)"""
+    def angulo(p):    
+        return math.atan2(p.y - q.y, p.x - q.x)
+    def distancia2(p):
+        return (q.x - p.x) * (q.x - p.x) + (q.y - p.y) * (q.y - p.y)
+
+    punto_tangencia_up = max(pol, key=lambda p: (angulo(p), -distancia2(p)))
+    """el punto de tangencia "inferior" es el que minimiza el ángulo (en caso de empate elegimos el de distancia menor)"""
+    punto_tangencia_down = min(pol, key=lambda p: (angulo(p), distancia2(p)))    
+    return [punto_tangencia_down, punto_tangencia_up]

@@ -2,51 +2,10 @@ import random
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+from envolvente_convexa import envolvente_naif
+from envolvente_convexa import gift_wrapping
+from gcom import *
 ERROR = 1e-9
-
-class Punto:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-    # se puede definir un punto con coordenadas dadas así: p = Punto(2, 3)
-    def __repr__(self):
-        return "({0},{1})".format(self.x, self.y)  
-    def __add__(self, other):
-        return Punto(self.x + other.x, self.y + other.y)  
-    def __sub__(self, other):
-        return Punto(self.x - other.x, self.y - other.y)
-    def __eq__(self, other):
-        return abs(self.x - other.x) + abs(self.y - other.y) < ERROR
-    def __hash__(self):
-        return 1000000000*int(self.x) + 1000*int(self.y)
-
-def prod_vect(u, v):
-    return u.x * v.y - u.y * v.x
-def det(a, b, c):
-    return prod_vect(b - a, c - a)
-
-def alineados(a: Punto, b: Punto, c: Punto) -> bool:
-    # Devuelve True/False si los puntos a, b, c están alineados/no lo están
-    return abs(det(a, b, c)) < ERROR
-
-def orient(a: Punto, b: Punto, c: Punto) -> int:
-    # 1/0/-1 si c a la izquierda/alineado/a la derecha de ab    
-    d = det(a, b, c)
-    if abs(d) < ERROR: return 0
-    elif d > ERROR: return 1
-    else: return -1
-
-
-def ordena_angularmente(puntos: list[Punto],foco) -> list[Punto]:
-    # Input: puntos es una lista de Punto
-    # Output: lista de puntos ordenada angularmente (según el ángulo desde el origen)
-    # Sugerencia: usar una función de comparación auxiliar como la esbozada
-    def angulo(p: Punto) -> float:
-        return math.atan2(p.y,p.x)
-    
-    return sorted(puntos,key=angulo)
-
-
 
 
 def GrahamScan_algorithm(puntos: list[Punto]) -> list[Punto]:
@@ -94,7 +53,7 @@ def GrahamScan_algorithm(puntos: list[Punto]) -> list[Punto]:
 
 
 
-# 1️⃣ Función para generar puntos aleatorios
+# Función para generar puntos aleatorios
 def generate_random_puntos(num_points, x_range=(-10, 10), y_range=(-10, 10)):
     """
     Genera una lista de objetos Punto con coordenadas aleatorias.
@@ -103,7 +62,7 @@ def generate_random_puntos(num_points, x_range=(-10, 10), y_range=(-10, 10)):
                   random.randint(y_range[0], y_range[1]))
             for _ in range(num_points)]
 
-# 2️⃣ Función para graficar puntos y la envolvente convexa
+# Función para graficar puntos y la envolvente convexa
 def plot_convex_hull(puntos, hull):
     """
     Dibuja los puntos y la envolvente convexa.
@@ -123,28 +82,11 @@ def plot_convex_hull(puntos, hull):
     plt.grid(True)
     plt.show()
 
-# 3️⃣ Ejemplo de uso
-if __name__ == "__main__":
-    # Generamos un conjunto de 20 puntos aleatorios
-    puntos = generate_random_puntos(20, x_range=(-20, 20), y_range=(-20, 20))
+puntos = generate_random_puntos(20, x_range=(-20, 20), y_range=(-20, 20))
+
+hull = gift_wrapping(puntos)
+print(len(hull))
     
-    # Calculamos la envolvente convexa
-    hull = GrahamScan_algorithm(puntos)
-    print(len(hull))
-    
-    # Graficamos
-    plot_convex_hull(puntos, hull)
 
-
-
-
-
-
-
-
-
-
-
-
-
+plot_convex_hull(puntos, hull)
 

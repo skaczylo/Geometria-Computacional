@@ -177,4 +177,3 @@ comprueba_segmentos_se_cortan([Punto(0,1), Punto(2,1)], [Punto(0,1), Punto(1,2)]
 # q = Punto(0.5, 0.5)
 # comprueba_punto_en_poligono(q, pol)
 
-# %%
