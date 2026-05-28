@@ -2,54 +2,10 @@ import random
 import math
 import numpy as np
 import matplotlib.pyplot as plt
-from envolvente_convexa import envolvente_naif
-from envolvente_convexa import gift_wrapping
-from gcom import *
+from src.envolvente_convexa import *
+from src.gcom import *
 ERROR = 1e-9
 
-
-def GrahamScan_algorithm(puntos: list[Punto]) -> list[Punto]:
-    """
-    Implementacion del algoritmo de Graham Scan para calcular la envolvente convexa
-    """
-    if len(puntos) <= 3:
-        return puntos
-    
-    #Encontramos punto mínimo: mas abajo y a la izquierda
-    p_min = min(puntos, key = lambda p: (p.y,p.x))
-
-    def angulo(p: Punto)->float:
-        angulo = math.atan2(p.y- p_min.y,p.x-p_min.x)
-        distancia = (p.x-p_min.x) **2 + (p.y- p_min.y) **2
-        return  (angulo,distancia)
-    
-    puntos.sort(key=angulo)
-
-    #Eliminar puntos colineales
-    puntos_no_colineales = [puntos[0]]
-    for i in range(1,len(puntos)):
-
-        while len(puntos_no_colineales) > 1 and orient(puntos_no_colineales[-2],puntos_no_colineales[-1],puntos[i]) == 0:
-            puntos_no_colineales.pop()
-        
-        puntos_no_colineales.append(puntos[i])
-
-    
-    #Envolvente convexa
-
-    puntos = puntos_no_colineales
-
-    envolvente = [puntos[0]]
-    envolvente.append(puntos[1]) #Es posible que se elimine
-
-    for i in range(2,len(puntos)):
-        
-        while(len(envolvente) > 1 and orient(envolvente[-2],envolvente[-1],puntos[i]) == -1):
-            envolvente.pop()
-        
-        envolvente.append(puntos[i])
-
-    return envolvente
 
 
 
@@ -84,7 +40,7 @@ def plot_convex_hull(puntos, hull):
 
 puntos = generate_random_puntos(20, x_range=(-20, 20), y_range=(-20, 20))
 
-hull = gift_wrapping(puntos)
+hull = naif2(puntos)
 print(len(hull))
     
 

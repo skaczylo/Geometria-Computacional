@@ -127,3 +127,8 @@ def puntos_tangencia_poligono(q: Punto, pol: list):
     """el punto de tangencia "inferior" es el que minimiza el ángulo (en caso de empate elegimos el de distancia menor)"""
     punto_tangencia_down = min(pol, key=lambda p: (angulo(p), distancia2(p)))    
     return [punto_tangencia_down, punto_tangencia_up]
+
+
+
+
+

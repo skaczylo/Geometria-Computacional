@@ -1,121 +1,110 @@
 """
 Implementaciones de varios algoritmos que calculan envolventes convexas
 """
-from gcom import *
-from itertools import combinations
-import matplotlib.pyplot as plt
+from .gcom import *
+from itertools import combinations,permutations
 
-def envolvente_naif(pol :list[Punto]) ->list[Punto]:
+
+def naif1(P: list[Punto]) -> list[Punto]:
     """
-    Un punto p está en la frontera si y solo si no está en el interior de ningun triangulo cuyos vertices son puntos
-    del poligono pol de n elementos
-
-    Coste: O(n^4)
+    Un punto p está en la frontera si y solo si no está en el interior de ningún triángulo
+    cuyos vértices son puntos de P.
+    Input: P lista de Puntos
+    Output: lista de vértices de la envolvente convexa ordenada angularmente
+    Coste total O(n⁵)
     """
-    envolvente = set(pol)
+    V = P
+    triangulos = combinations(P,3)
 
-    for triangulo in combinations(pol,3): #aprox n^3 iteraciones
-        for p in pol: #n iteraciones
-            t1,t2,t3 = triangulo
-            if p != t1 and p != t2 and p != t3:
-                if p in envolvente and punto_en_triangulo(p,triangulo):
-                    envolvente.remove(p)
+    for t in triangulos: #n³ iteraciones
 
-    
-    return  ordena_angularmente(envolvente)
+        for p in P: #n iteraciones
+
+            if not p in t:
+                if punto_en_triangulo(p,list(t)):
+                    V.remove(p) #Coste O(n)
+    V = ordena_angularmente(V)
+    return V
 
 
-def gift_wrapping(pol: list[Punto]) ->list[Punto]:
-
+def naif2(P: list[Punto]) -> list[Punto]:
     """
-    Calculamos el primer vertice p0 de la envolvente y determinamos una dirección cualquiera pq.
-
-    El siguiente punto q de la envolvente será aquel que forme el menor ángulo; sin embargo, esto es
-    equivalente a coger aquel punto que esté más a la derecha (o la izquierda si se recorrer en sentido horario).
-
-    Coste: O(n*h)
+    Segmento [p,q] es un lado de la envolvente convexa si y solo si todos los demás
+    puntos están al mismo lado de la recta que pasa por p y q o alineados con ella.
+    Input: P lista de Puntos
+    Output: lista de vértices de la envolvente convexa ordenada angularmente
     """
+    V = []
+    aristas = permutations(P,2) #Realizamos permutaciones para que se consideren tanto [p,q] como [q,p]
 
-    p0 = min(pol, key=lambda p: (p.y,p.x))
+    for arista in aristas:
 
-    envolvente = [p0]
-    p = p0
-    
-    while True: #h iteraciones de h es el cardinal de la envolvente
+        lado = True #Comprueba si todos estan en el mismo lado
 
-        q  = pol[0] if pol[0] != p else pol[1] #q cualquiera
-        for i in pol: #n iteraciones
-            if i == p :
-                continue
-            
-            #Al comparar con todos los puntos posibles, el último será siempre el que este más a la dercha
-            if orient(p,q,i) == 1: 
-                q = i
-        
+        for r in P:
+            if not r  in arista:
 
-        if q == p0:
-            break
+                p,q = arista
+                if orient(p,q,r) == 1:
+                    lado = False
+                    break
 
-        envolvente.append(q)
-        p = q
-        #plot_convex_hull(pol,envolvente)
+        if lado ==True:
+            p,q = arista
+            V.append(p)
+            V.append(q)
+
+    V = ordena_angularmente(V)
+    return V
 
 
-        
-    return envolvente #ya estan ordenados pues se insertan ordenados
-
-
-def GrahamScan_algorithm(puntos: list[Punto]) -> list[Punto]:
+def grahams_scan(puntos: list[Punto]) -> list[Punto]:
     """
-    Implementacion del algoritmo de Graham Scan para calcular la envolvente convexa
-
-    Coste: O(n*long(n))
+    Input: lista de Puntos
+    Output: lista ordenada positivamente de los puntos que componen la envolvente convexa
     """
     if len(puntos) <= 3:
         return puntos
-    
-    #Encontramos punto mínimo: mas abajo y a la izquierda
-    p_min = min(puntos, key = lambda p: (p.y,p.x))
 
-    def angulo(p: Punto)->float:
-        angulo = math.atan2(p.y- p_min.y,p.x-p_min.x)
-        distancia = (p.x-p_min.x) **2 + (p.y- p_min.y) **2
-        return  (angulo,distancia)
-    
+    p_inicial = min(puntos, key=lambda p: (p.y, p.x))
+
+    def angulo(p: Punto) -> float:
+        angulo = math.atan2(p.y - p_inicial.y, p.x - p_inicial.x)
+        distancia = (p.x - p_inicial.x) ** 2 + (p.y - p_inicial.y) ** 2
+        return (angulo, distancia)
+
     puntos.sort(key=angulo)
 
-    #Eliminar puntos colineales
-    puntos_no_colineales = [puntos[0]]
-    for i in range(1,len(puntos)):
+    puntos_ = [puntos[0]]
 
-        while len(puntos_no_colineales) > 1 and orient(puntos_no_colineales[-2],puntos_no_colineales[-1],puntos[i]) == 0:
-            puntos_no_colineales.pop()
-        
-        puntos_no_colineales.append(puntos[i])
+    for i in range(1, len(puntos)):
 
-    
-    #Envolvente convexa
+        while len(puntos_) > 1 and orient(puntos_[-2], puntos_[-1], puntos[i]) == 0:
+            puntos_.pop()
 
-    puntos = puntos_no_colineales
+        puntos_.append(puntos[i])
+
+    puntos = puntos_
 
     envolvente = [puntos[0]]
-    envolvente.append(puntos[1]) #Es posible que se elimine
+    envolvente.append(puntos[1])  #se añade pero puede eliminarse si queda a la derecha
 
-    for i in range(2,len(puntos)):
-        
-        while(len(envolvente) > 1 and orient(envolvente[-2],envolvente[-1],puntos[i]) == -1):
+    for i in range(2, len(puntos)):
+
+        while (len(envolvente) > 1 and orient(envolvente[-2], envolvente[-1], puntos[i]) == -1):
             envolvente.pop()
-        
+
         envolvente.append(puntos[i])
 
     return envolvente
 
 
-def divide_y_venceras(pol: list[Punto])->list[Punto]:
-    """
-    Algoritmo de divide y venceras para calcular la envolvente convexa
-    """
-    return
+    
+
+
+
+
+
 
 
 
